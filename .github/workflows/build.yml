@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - ubuntu-latest
+        - ubuntu-24.04
         - macOS-13
         - windows-latest
         buildType:
@@ -47,7 +47,9 @@ jobs:
     - name: Install Linux dependencies
       if: runner.os == 'Linux'
       run: |
-        sudo apt install -y swig libpython3-dev libsasl2-dev libjsoncpp-dev
+        sudo apt update
+        sudo apt install -y swig libpython3-dev libsasl2-dev libjsoncpp-dev \
+          softhsm2 pkcs11-provider opensc
     - name: Install Windows dependencies
       if: runner.os == 'Windows'
       run: |
@@ -88,7 +90,13 @@ jobs:
     - id: ctest
       name: ctest
       working-directory: ${{env.BuildDir}}
-      run: ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
+      run: |
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          pushd ${{github.workspace}}
+          . scripts/prep-pkcs11_test.sh
+          popd
+        fi
+        ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
       shell: bash
     - name: Upload Test results
       if: always() && (steps.ctest.outcome == 'failure' || steps.ctest.outcome == 'success')
