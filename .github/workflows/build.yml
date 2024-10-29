@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         os:
         - ubuntu-24.04
@@ -97,6 +97,9 @@ jobs:
           pushd ${{github.workspace}}
           . scripts/prep-pkcs11_test.sh
           popd
+          ls -l $XDG_RUNTIME_DIR/qpid-proton-build/
+          ls -l $XDG_RUNTIME_DIR/qpid-proton-build/softhsm2-tokens
+          env
         fi
         ctest -C ${BuildType} -V -T Test --no-compress-output ${{matrix.ctest_extra}}
       shell: bash
